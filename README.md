@@ -152,6 +152,16 @@ Only **2 layers need manual updates:**
 
 See [diagrams/auto-update-pipeline.md](diagrams/auto-update-pipeline.md) for the full trigger chain.
 
+## Prerequisites
+
+- **Linux** (systemd-based) — Ubuntu 22.04+, Debian 12+, Arch, Kali. The system depends on systemd user services and inotifywait, which have no direct equivalents on macOS or Windows.
+- **Docker** — for Neo4j
+- **Python 3.10+** — for vector seeding and embedding
+- **Claude Code** — the AI assistant this architecture is built around
+- **Go** *(optional)* — for the [claude-code-logs](https://github.com/fabriqaai/claude-code-logs) HTTP server (Layer 7)
+- **Obsidian** *(optional)* — for Layer 4 (human knowledge notes)
+- **inotify-tools** — `sudo apt install inotify-tools` (for the session watcher)
+
 ## Quick Start
 
 See the [Setup Guide](docs/setup-guide.md) for full instructions. The short version:
