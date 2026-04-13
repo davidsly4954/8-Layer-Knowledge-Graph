@@ -63,6 +63,43 @@ graph TD
     style L8 fill:#1e3a5f,stroke:#3b82f6,color:#fff
 ```
 
+## How It Works
+
+Most AI memory solutions use **RAG** (Retrieval-Augmented Generation) — embed your docs as vectors, find the closest match at query time, and inject it into the prompt. That works for one type of question: *"find something semantically similar to X."*
+
+But an AI coding assistant needs to answer very different types of questions:
+
+| You Ask | What's Needed | RAG Alone? |
+|---------|---------------|:----------:|
+| "What calls this function?" | Code structure — AST, imports, call graph | No |
+| "Find things related to authentication" | Semantic similarity across all docs | **Yes** |
+| "What did we decide about the API last week?" | Session history — who said what, when | No |
+| "Why did we choose PostgreSQL over MongoDB?" | Human decision records, architecture notes | Partially |
+| "Don't use tabs, I prefer spaces" | Persistent user preferences | No |
+
+**One retrieval strategy can't cover all of these.** That's why this system uses 8 layers — each captures a type of knowledge the others miss:
+
+- **Structural layers** (1–2) parse your actual code into graphs. They know that `auth.py` imports `jwt`, that `UserService` calls `Database.query()`, and that 14 files form a tightly-coupled authentication community. This is deterministic — no AI needed, no hallucination possible.
+
+- **Session layers** (3, 7–8) record what happened during development. Every conversation is logged as JSONL, imported into a graph database, and linked across sessions. Three weeks from now, you can ask *"when did we discuss the rate limiter?"* and get an answer with full context.
+
+- **Human knowledge layers** (4, 6) capture what exists in your head but not in the code — architecture rationale, design decisions, user preferences, project context. These are the things a new team member would need a month of onboarding to learn.
+
+- **Semantic layer** (5) is the RAG component. It embeds everything into vectors so you can search by meaning rather than keywords. But unlike standalone RAG, it works alongside 7 other layers that give it structural and temporal context.
+
+### The Auto-Update Loop
+
+The key design decision is that **6 of 8 layers update themselves** during normal development. You don't maintain the knowledge graph — it maintains itself:
+
+1. You edit a file → a **hook** fires → code graph updates instantly
+2. Your conversation grows → **session watcher** detects it → Neo4j reimports automatically
+3. You write a note in Obsidian → **daemon** indexes it → searchable via MCP within seconds
+4. A **30-minute timer** catches anything the real-time triggers missed
+
+Only two layers need manual runs: the full-codebase Graphify snapshot and the vector database seeder. Everything else happens in the background while you work.
+
+---
+
 ## The 8 Layers
 
 | # | Layer | What It Captures | Storage | Update |
