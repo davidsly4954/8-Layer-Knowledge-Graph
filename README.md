@@ -65,19 +65,7 @@ graph TD
 
 ## How It Works
 
-Most AI memory solutions use **RAG** (Retrieval-Augmented Generation) — embed your docs as vectors, find the closest match at query time, and inject it into the prompt. That works for one type of question: *"find something semantically similar to X."*
-
-But an AI coding assistant needs to answer very different types of questions:
-
-| You Ask | What's Needed | RAG Alone? |
-|---------|---------------|:----------:|
-| "What calls this function?" | Code structure — AST, imports, call graph | No |
-| "Find things related to authentication" | Semantic similarity across all docs | **Yes** |
-| "What did we decide about the API last week?" | Session history — who said what, when | No |
-| "Why did we choose PostgreSQL over MongoDB?" | Human decision records, architecture notes | Partially |
-| "Don't use tabs, I prefer spaces" | Persistent user preferences | No |
-
-**One retrieval strategy can't cover all of these.** That's why this system uses 8 layers — each captures a type of knowledge the others miss:
+An AI coding assistant needs different types of knowledge to be useful — code structure, conversation history, design decisions, user preferences. No single storage or retrieval method captures all of these well, so this system splits them across 8 specialized layers:
 
 - **Structural layers** (1–2) parse your actual code into graphs. They know that `auth.py` imports `jwt`, that `UserService` calls `Database.query()`, and that 14 files form a tightly-coupled authentication community. This is deterministic — no AI needed, no hallucination possible.
 
@@ -85,7 +73,15 @@ But an AI coding assistant needs to answer very different types of questions:
 
 - **Human knowledge layers** (4, 6) capture what exists in your head but not in the code — architecture rationale, design decisions, user preferences, project context. These are the things a new team member would need a month of onboarding to learn.
 
-- **Semantic layer** (5) is the RAG component. It embeds everything into vectors so you can search by meaning rather than keywords. But unlike standalone RAG, it works alongside 7 other layers that give it structural and temporal context.
+- **Semantic layer** (5) embeds all text content into vectors for similarity search. When you ask *"find things related to authentication"*, it searches by meaning rather than keywords — surfacing relevant docs, notes, and session fragments across the entire system.
+
+| You Ask | Layer That Answers |
+|---------|-------------------|
+| "What calls this function?" | Layers 1–2 — code graph (AST, imports, call relationships) |
+| "Find things related to authentication" | Layer 5 — vector similarity across all content |
+| "What did we decide about the API last week?" | Layers 3, 7 — session history and graph |
+| "Why did we choose PostgreSQL over MongoDB?" | Layers 4, 6 — architecture notes and decision records |
+| "Don't use tabs, I prefer spaces" | Layer 6 — persistent user preferences |
 
 ### The Auto-Update Loop
 
