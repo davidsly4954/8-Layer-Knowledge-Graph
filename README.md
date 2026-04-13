@@ -19,53 +19,27 @@ This architecture solves that with 8 complementary knowledge layers that capture
 ## Architecture Overview
 
 ```mermaid
-graph LR
-    subgraph "8-Layer Knowledge Graph"
-        direction TB
+graph TD
+    T1([File Edit]) & T2([Session Start]) & T3([Session End]) & T4([30-min Timer]) & T5([File Change]) & T6([Context Threshold])
 
-        subgraph triggers [" "]
-            direction LR
-            T1([File Edit])
-            T2([Session Start])
-            T3([Session End])
-            T4([30-min Timer])
-            T5([File Change])
-            T6([Context Threshold])
-        end
+    T1 & T2 & T3 -->|hook| L2
+    T4 -->|systemd| L3
+    T5 -->|inotify| L8
+    T6 -->|hook| L6
 
-        subgraph layers [" "]
-            direction TB
-            subgraph code ["Code Understanding"]
-                L1["1 · Graphify<br/><i>Static graph + communities</i>"]
-                L2["2 · Code Review Graph<br/><i>Live AST tracking</i>"]
-            end
-            subgraph session ["Session Intelligence"]
-                L3["3 · Neo4j<br/><i>Session history + links</i>"]
-                L7["7 · Session Logs<br/><i>Full JSONL archive</i>"]
-                L8["8 · Session Watcher<br/><i>Auto-import pipeline</i>"]
-            end
-            subgraph knowledge ["Knowledge Base"]
-                L4["4 · Obsidian MCP<br/><i>Human-written notes</i>"]
-                L6["6 · Memory Files<br/><i>Persistent facts</i>"]
-            end
-            subgraph semantic ["Semantic Layer"]
-                L5["5 · Qdrant Vectors<br/><i>Similarity search</i>"]
-            end
-        end
+    L1["1 · Graphify — Static graph + communities"]
+    L2["2 · Code Review Graph — Live AST tracking"]
+    L3["3 · Neo4j — Session history + links"]
+    L4["4 · Obsidian MCP — Human-written notes"]
+    L5["5 · Qdrant Vectors — Similarity search"]
+    L6["6 · Memory Files — Persistent facts"]
+    L7["7 · Session Logs — Full JSONL archive"]
+    L8["8 · Session Watcher — Auto-import pipeline"]
 
-        T1 -->|hook| L2
-        T2 -->|hook| L2
-        T3 -->|hook| L2
-        T4 -->|systemd| L3
-        T5 -->|inotify| L8
-        T6 -->|hook| L6
-
-        L2 -->|signals| L3
-        L7 -->|JSONL| L8
-        L8 -->|reimport| L3
-        L4 -->|embeddings| L5
-        L6 -->|embeddings| L5
-    end
+    L2 -->|signals| L3
+    L7 -->|JSONL| L8
+    L8 -->|reimport| L3
+    L4 & L6 -->|embeddings| L5
 
     style L1 fill:#2d1b69,stroke:#8b5cf6,color:#fff
     style L2 fill:#1e3a5f,stroke:#3b82f6,color:#fff
@@ -81,10 +55,6 @@ graph LR
     style T4 fill:#333,stroke:#888,color:#fff
     style T5 fill:#333,stroke:#888,color:#fff
     style T6 fill:#333,stroke:#888,color:#fff
-    style code fill:none,stroke:#8b5cf6,stroke-width:1px,color:#aaa
-    style session fill:none,stroke:#3b82f6,stroke-width:1px,color:#aaa
-    style knowledge fill:none,stroke:#22c55e,stroke-width:1px,color:#aaa
-    style semantic fill:none,stroke:#f59e0b,stroke-width:1px,color:#aaa
 ```
 
 ## The 8 Layers
