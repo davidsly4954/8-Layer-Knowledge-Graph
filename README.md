@@ -19,41 +19,72 @@ This architecture solves that with 8 complementary knowledge layers that capture
 ## Architecture Overview
 
 ```mermaid
-graph TB
-    subgraph "Knowledge Layers"
-        L1[Layer 1: Graphify<br/>Static code graph]
-        L2[Layer 2: Code Review Graph<br/>Live AST tracking]
-        L3[Layer 3: Neo4j + Context Graph<br/>Session history]
-        L4[Layer 4: Obsidian MCP<br/>Human knowledge base]
-        L5[Layer 5: Qdrant Vectors<br/>Semantic search]
-        L6[Layer 6: Memory Files<br/>Persistent facts]
-        L7[Layer 7: Session Logs<br/>Full transcript archive]
-        L8[Layer 8: Session Watcher<br/>Auto-import pipeline]
+graph LR
+    subgraph "8-Layer Knowledge Graph"
+        direction TB
+
+        subgraph triggers [" "]
+            direction LR
+            T1([File Edit])
+            T2([Session Start])
+            T3([Session End])
+            T4([30-min Timer])
+            T5([File Change])
+            T6([Context Threshold])
+        end
+
+        subgraph layers [" "]
+            direction TB
+            subgraph code ["Code Understanding"]
+                L1["1 · Graphify<br/><i>Static graph + communities</i>"]
+                L2["2 · Code Review Graph<br/><i>Live AST tracking</i>"]
+            end
+            subgraph session ["Session Intelligence"]
+                L3["3 · Neo4j<br/><i>Session history + links</i>"]
+                L7["7 · Session Logs<br/><i>Full JSONL archive</i>"]
+                L8["8 · Session Watcher<br/><i>Auto-import pipeline</i>"]
+            end
+            subgraph knowledge ["Knowledge Base"]
+                L4["4 · Obsidian MCP<br/><i>Human-written notes</i>"]
+                L6["6 · Memory Files<br/><i>Persistent facts</i>"]
+            end
+            subgraph semantic ["Semantic Layer"]
+                L5["5 · Qdrant Vectors<br/><i>Similarity search</i>"]
+            end
+        end
+
+        T1 -->|hook| L2
+        T2 -->|hook| L2
+        T3 -->|hook| L2
+        T4 -->|systemd| L3
+        T5 -->|inotify| L8
+        T6 -->|hook| L6
+
+        L2 -->|signals| L3
+        L7 -->|JSONL| L8
+        L8 -->|reimport| L3
+        L4 -->|embeddings| L5
+        L6 -->|embeddings| L5
     end
 
-    subgraph "Triggers"
-        T1[File Edit] -->|PostToolUse hook| L2
-        T2[Session Start] -->|Hook| L2
-        T3[Session End] -->|Stop hook| L2
-        T4[Timer - 30 min] -->|systemd| L3
-        T5[File Change] -->|inotifywait| L8
-        T8[Context Threshold] -->|PreToolUse hook| L6
-    end
-
-    L2 -->|signals| L3
-    L8 -->|reimport| L3
-    L4 -->|embeddings| L5
-    L6 -->|embeddings| L5
-    L7 -->|JSONL files| L8
-
-    style L1 fill:#1a1a2e,stroke:#e94560,color:#fff
-    style L2 fill:#1a1a2e,stroke:#e94560,color:#fff
-    style L3 fill:#16213e,stroke:#0f3460,color:#fff
-    style L4 fill:#16213e,stroke:#0f3460,color:#fff
-    style L5 fill:#0f3460,stroke:#533483,color:#fff
-    style L6 fill:#0f3460,stroke:#533483,color:#fff
-    style L7 fill:#1a1a2e,stroke:#e94560,color:#fff
-    style L8 fill:#1a1a2e,stroke:#e94560,color:#fff
+    style L1 fill:#2d1b69,stroke:#8b5cf6,color:#fff
+    style L2 fill:#1e3a5f,stroke:#3b82f6,color:#fff
+    style L3 fill:#1e3a5f,stroke:#3b82f6,color:#fff
+    style L4 fill:#1a4731,stroke:#22c55e,color:#fff
+    style L5 fill:#5c2d0e,stroke:#f59e0b,color:#fff
+    style L6 fill:#1a4731,stroke:#22c55e,color:#fff
+    style L7 fill:#1e3a5f,stroke:#3b82f6,color:#fff
+    style L8 fill:#1e3a5f,stroke:#3b82f6,color:#fff
+    style T1 fill:#333,stroke:#888,color:#fff
+    style T2 fill:#333,stroke:#888,color:#fff
+    style T3 fill:#333,stroke:#888,color:#fff
+    style T4 fill:#333,stroke:#888,color:#fff
+    style T5 fill:#333,stroke:#888,color:#fff
+    style T6 fill:#333,stroke:#888,color:#fff
+    style code fill:none,stroke:#8b5cf6,stroke-width:1px,color:#aaa
+    style session fill:none,stroke:#3b82f6,stroke-width:1px,color:#aaa
+    style knowledge fill:none,stroke:#22c55e,stroke-width:1px,color:#aaa
+    style semantic fill:none,stroke:#f59e0b,stroke-width:1px,color:#aaa
 ```
 
 ## The 8 Layers
